@@ -50,6 +50,12 @@ void clock_init(void) {
 
 
 
+void babysleep(size_t sleep){
+    size_t current_tick = ticks;
+    while(ticks - current_tick < sleep){
+        asm("hlt");
+    }
+}
 
 
 

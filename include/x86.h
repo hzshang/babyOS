@@ -209,4 +209,17 @@ __memcpy(void *dst, const void *src, size_t n) {
 #endif /* __HAVE_ARCH_MEMCPY */
 
 #endif /* !__INCLUDE_X86_H__ */
+#if defined(__x86_64) || defined(__i386)
+#define cpu_relax() __asm__("pause":::"memory")
+#else
+#define cpu_relax() __asm__("":::"memory")
+#endif
+
+#define DECLARE_LOCK(name) volatile int name ## Locked
+#define LOCK(name) \
+    while (!__sync_bool_compare_and_swap(& name ## Locked, 0, 1)); \
+    __sync_synchronize();
+#define UNLOCK(name) \
+    __sync_synchronize(); \
+    name ## Locked = 0;
 

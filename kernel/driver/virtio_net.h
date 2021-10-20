@@ -1,6 +1,9 @@
 #ifndef VIRTIO_NET_H
 #define VIRTIO_NET_H
 #define FRAME_SIZE 1526 // including the net_header
+#include <trap.h>
+
+
 
 typedef struct {
 #define VIRTIO_NET_HDR_F_NEEDS_CSUM    1
@@ -24,6 +27,7 @@ typedef struct {
     uint16_t max_virtqueue_pairs;
     uint16_t mtu;
 }__attribute__((packed)) virtio_net_config;
-
-
+void network_card_setup(virtio_device* vdev);
+void virtionet_handler(struct trapframe* trap);
+int network_card_init(virtio_device* vdev);
 #endif

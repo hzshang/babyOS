@@ -65,6 +65,8 @@ typedef struct {
     uint8_t irqpin;
     uint8_t subsystem_id;
     uint8_t subsystem_vendorid;
+    uint8_t class_code;
+    uint8_t subclass;
     uint32_t reg_base[6];
     uint32_t reg_size[6];
 }Device;

@@ -51,7 +51,7 @@ int device_num;
 
 void pci_init(){
     for(uint16_t bus = 0;bus < 0x100;bus ++){
-        for(uint16_t device = 0;device<8;device++){
+        for(uint16_t device = 0;device<0xff;device++){
             uint32_t value = PCI_read(bus,device,0,0);
             if(!value || value == 0xffffffff)
                 continue;
@@ -66,15 +66,23 @@ void pci_init(){
             devices[device_num].subsystem_vendorid = value&0xffff;
             devices[device_num].bus_id = bus;
             devices[device_num].device_id = device;
+            value = PCI_read(bus,device,0,0x8);
+            devices[device_num].class_code = value >> 24;
+            devices[device_num].subclass = (value>>16)&0xff;
+
             kprintf("PCI at %x:%x vendor %x,device:%x\n"
-                    "    subsystemID: %x subsystem vendorID: %x irq: %d\n",
+                    "    subsystemID: %x subsystem vendorID: %x irq: %d\n"
+                    "    class code: %x subclass:  %x\n",
                     bus,device,devices[device_num].vendor,
                     devices[device_num].device,
                     devices[device_num].subsystem_id,
                     devices[device_num].subsystem_vendorid,
-                    devices[device_num].irq
+                    devices[device_num].irq,
+                    devices[device_num].class_code,
+                    devices[device_num].subclass
                     );
             device_num++;
+            get_c();
         }
     }
 }

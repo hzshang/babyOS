@@ -31,16 +31,18 @@ gdb:$(img)
 	sudo $(QEMU) -S -s -curses $(img) \
 		-netdev tap,id=n1,ifname=tap100 \
 		-device virtio-net-pci,netdev=n1,mac=cc:dd:ee:ff:aa:bb\
-
+		-smp 2
 
 	#sudo $(QEMU) -enable-kvm -S -s $(img)
 
 
 qemu: 
-	sudo $(QEMU) -curses $(img) -machine pc\
+	sudo $(QEMU) $(img) -machine pc\
 		-netdev tap,id=n1,ifname=aaa0 \
 		-device virtio-net-pci,netdev=n1,mac=cc:dd:ee:ff:aa:bb \
-		-monitor tcp:127.0.0.1:4567 \
+		-smp 2 -curses
+
+	#  
 
 
 	# -enable-kvm \

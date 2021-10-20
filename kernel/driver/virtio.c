@@ -1,9 +1,3 @@
-/*
- * virtio.c
- * Copyright (C) 2021 mac <hzshang15@gmail.com>
- *
- * Distributed under terms of the MIT license.
- */
 #include <virtio.h>
 #include <pci.h>
 #include <physical_page.h>
@@ -14,6 +8,7 @@
 #include <virtio_pci.h>
 #include <virtio_net.h>
 #include <virtio_ops.h>
+
 #define QUEUE_LENGTH 0x10
 #define VIRTIO_BLK_F_SIZE_MAX 1
 #define VIRTIO_BLK_F_SEG_MAX 2
@@ -38,7 +33,6 @@
 #define QUEUE_SIZE 0xc
 #define QUEUE_ADDR 0x8
 #define QUEUE_NOTIFY 0x10
-virtio_device vdevs[0x10];
 /*
  * 0: Device Features bits 0:31
  * 4: Driver Features bits 0:31
@@ -78,95 +72,13 @@ bool virtio_queue_init(virt_queue* queue,uint16_t port,uint16_t idx){
 }
 
 void setup_virtqueue(virtio_device* vdev,int idx);
-virtio_device* alloc_virtdev(Device* dev);
+
 void notify_queue(virtio_device* vdev, uint16_t queue);
 
 void show_device_status(virtio_device* vdev);
 
-int network_card_init(virtio_device* vdev){
-    virtio_pci_dev* pdev = &vdev->pdev;
-    // reset
-    pdev->ops->set_status(pdev,0);
 
-    uint8_t c = VIRTIO_ACKNOWLEDGE;
-    pdev->ops->set_status(pdev,c);
-    c |= VIRTIO_DRIVER;
-    pdev->ops->set_status(&vdev->pdev,c);
-    uint64_t device_feature = pdev->ops->get_features(pdev);
-    kprintf("device feature: %x\n",device_feature);
-    DISABLE_FEATURE(device_feature,VIRTIO_CTRL_VQ);
-    DISABLE_FEATURE(device_feature,VIRTIO_GUEST_TSO4);
-    DISABLE_FEATURE(device_feature,VIRTIO_GUEST_TSO6);
-    DISABLE_FEATURE(device_feature,VIRTIO_GUEST_UFO);
-    DISABLE_FEATURE(device_feature,VIRTIO_EVENT_IDX);
-    DISABLE_FEATURE(device_feature,VIRTIO_MRG_RXBUF);
-    DISABLE_FEATURE(device_feature,VIRTIO_F_NOTIFICATION_DATA);
-    pdev->ops->set_features(pdev,device_feature);
-    pdev->guest_feature = device_feature;
-    c |= VIRTIO_FEATURES_OK;
-    pdev->ops->set_status(pdev,c);
 
-    uint8_t virtio_status = pdev->ops->get_status(pdev);
-    if((virtio_status&VIRTIO_FEATURES_OK) == 0){
-        kprintf("feature is not ok\n");
-        return 0;
-    }
-    for(int i=0;i<QUEUE_COUNT;i++){
-        setup_virtqueue(vdev,i);
-    }
-    c |= VIRTIO_DRIVER_OK;
-    pdev->ops->set_status(pdev,c);
-    virtio_status = pdev->ops->get_status(pdev);
-    if (virtio_status & VIRTIO_FAILED){
-        kprintf("virtio init failed\n");
-        return 0;
-    }
-    show_device_status(vdev);
-    return 1;
-}
-
-void network_card_setup(virtio_device* vdev){
-
-    virt_queue* rx = &vdev->queue[0]; // Receive
-    virt_queue* tx = &vdev->queue[1]; // Send
-    rx->chunk_size = FRAME_SIZE;
-    rx->available->index = 0;
-
-    virtq_desc buffer;
-    buffer.length = FRAME_SIZE;
-    buffer.flags = VIRTIO_DESC_FLAG_WRITE_ONLY;
-    buffer.address = 0;
-    for(int i=0;i<rx->queue_size;i++){
-        virtio_fill_buffer(vdev, 0, &buffer, 1,1);
-    }
-    tx->available->index = 0;
-    tx->chunk_size = FRAME_SIZE;
-    vdev->pdev.ops->notify_queue(&vdev->pdev,tx);
-    // PCI enable
-
-    void virtionet_handler(struct trapframe* trap);
-    virtio_enable_interrupts(rx);
-
-    pic_enable(vdev->pdev.irq,virtionet_handler);
-    kprintf("vdev irq: %d\n",vdev->pdev.irq);
-}
-
-void virtio_net_install(){
-    for(int i=0;i<device_num;i++){
-        if(devices[i].vendor == VENDOR
-                && devices[i].device == DEVICE
-                && devices[i].subsystem_id == 1)
-        {
-            PCI_loadbars(&devices[i]);
-            virtio_device* vdev = alloc_virtdev(&devices[i]);
-            if(!network_card_init(vdev) ){
-                vdev->inuse = 0;
-                continue;
-            }
-            network_card_setup(vdev);
-        }
-    }
-}
 
 void virtio_enable_interrupts(virt_queue* vq)
 {
@@ -178,43 +90,7 @@ void virtio_disable_interrupts(virt_queue* vq)
     vq->used->flags = 1;
 }
 
-virtio_device* alloc_virtdev(Device* dev){
-    int i = 0;
-    for(;i<sizeof(vdevs)/sizeof(vdevs[0]);i++){
-        if(vdevs[i].inuse == 0)
-            break;
-    }
-    if(i == sizeof(vdevs)/sizeof(vdevs[0]))
-        return NULL;
-    virtio_device* vdev = &vdevs[i];
-    memset(vdev,0,sizeof(*vdev));
-    vdev->inuse = 1;
-    vdev->pdev.pci = dev;
-    vdev->pdev.iobase = dev->iobase;
-    vdev->pdev.irq = dev->irq;
-    // load mac addr
-    for(int i=0;i<6;i++){
-        vdev->pdev.macaddr[i] = inb(vdev->pdev.iobase+i+0x14);
-    }
-    kprintf("mac addr: %x:%x:%x:%x:%x:%x\n",
-            vdev->pdev.macaddr[0],
-            vdev->pdev.macaddr[1],
-            vdev->pdev.macaddr[2],
-            vdev->pdev.macaddr[3],
-            vdev->pdev.macaddr[4],
-            vdev->pdev.macaddr[5]);
-    // kprintf("virtio dev irq: %d\n",vdev->irq);
-    if(virtio_read_caps(&vdev->pdev) == 0){
-        // modern mode
-        vdev->modern = true;
-        vdev->pdev.ops = &modern_ops;
 
-    }else{
-        vdev->modern = false;
-        vdev->pdev.ops = &legacy_ops;
-    }
-    return vdev;
-}
 
 void setup_virtqueue(virtio_device* vdev,int idx){
 
@@ -342,61 +218,7 @@ void virtionet_send(void* driver, void *packet, uint16_t length){
     virtio_fill_buffer(vdev,1,desc,2,1);
 }
 
-void virtionet_handler(struct trapframe* trap){
-    kprintf("read to recv packet\n");
-    virtio_device* vdev = &vdevs[0];
-    virt_queue* vq = &vdev->queue[0];
-    virtio_disable_interrupts(vq);
-    uint8_t isr = vdev->pdev.ops->get_isr(&vdev->pdev);
-    kprintf("isr status: %d\n",isr);
 
-    uint16_t idx = vq->last_used_index%vq->queue_size;
-    uint16_t buf_idx = vq->used->ring[idx].index;
-    kprintf("buffer index: %d length: %d\n",buf_idx,vq->used->ring[idx].length);
 
-    while(1){
-        uint32_t addr = vq->buffers[buf_idx].address&0xffffffff;
-        uint32_t length = vq->buffers[buf_idx].length;
-        kprintf("recv data at addr:%x, length: %d\n",addr,length);
-        dumpmem((void*)addr,0x50);
-        if(vq->buffers[buf_idx].flags & VIRTIO_DESC_FLAG_NEXT){
-            buf_idx = vq->buffers[buf_idx].next;
-        }else{
-            break;
-        }
-    }
-    vq->last_used_index++;
-    virtq_desc buffer;
-    buffer.length = FRAME_SIZE;
-    buffer.flags = VIRTIO_DESC_FLAG_WRITE_ONLY;
-    buffer.address = 0;
-    virtio_enable_interrupts(vq);
-    virtio_fill_buffer(vdev, 0, &buffer, 1,1);
-    return;
-}
 
-void show_device_status(virtio_device* vdev){
-
-    uint16_t status = vdev->pdev.ops->get_status(&vdev->pdev);
-    kprintf("device status: ");
-    if(status & VIRTIO_FAILED){
-        kprintf("VIRTIO_FAILED");
-    }
-    if(status & VIRTIO_ACKNOWLEDGE){
-        kprintf("VIRTIO_ACKNOWLEDGE ");
-    }
-    if(status & VIRTIO_DRIVER){
-        kprintf("VIRTIO_DRIVER ");
-    }
-    if(status & VIRTIO_DRIVER_OK){
-        kprintf("VIRTIO_DRIVER_OK ");
-    }
-    if(status & VIRTIO_FEATURES_OK){
-        kprintf("VIRTIO_FEATURES_OK ");
-    }
-    if(status & VIRTIO_DEVICE_NEEDS_RESET){
-        kprintf("VIRTIO_DEVICE_NEEDS_RESET ");
-    }
-    kprintf("\n");
-}
 

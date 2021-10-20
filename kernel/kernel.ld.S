@@ -5,11 +5,10 @@ OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
 OUTPUT_ARCH(i386)
 ENTRY(loader)
 
-SECTIONS {
-	/* Load the kernel at this address: "." means the current address */
+SECTIONS {	
 	. = 0x100000;
 	.text : {
-        *(.multiboot)
+		*(.multiboot)
 		*(.text .stub .text.* .gnu.linkonce.t.*)
 	}
 	PROVIDE(etext = .);	/* Define the 'etext' symbol to this value */
@@ -51,7 +50,16 @@ SECTIONS {
     . = ALIGN(0x1000);
     . += 0x20000;
     PROVIDE(kernel_stack = .);
-    
+
+
+    . = 0x1000;
+
+    .textcpu2 : {
+    		*(.text2.cpu2)
+    }
+
+    . = 0x800000;
+    PROVIDE(kernel_stack2 = .);
 
 	/DISCARD/ : {
 		*(.eh_frame .note.GNU-stack)
