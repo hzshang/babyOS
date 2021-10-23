@@ -43,7 +43,7 @@ void clock_init(void) {
     outb(IO_TIMER1, TIMER_DIV(100) / 256);
     // initialize time counter 'ticks' to zero
     ticks = 0;
-    kprintf("setup timer interrupts\n");
+    // kprintf("setup timer interrupts\n");
     pic_enable(IRQ_TIMER,ticks_callback);
 }
 

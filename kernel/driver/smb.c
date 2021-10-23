@@ -14,7 +14,7 @@ void smb_init(){
 		}
 	}
 	if(!dev){
-		kprintf("can't find smb bus\n");
+		// kprintf("can't find smb bus\n");
 		return;
 	}
 	smb_dev = dev;

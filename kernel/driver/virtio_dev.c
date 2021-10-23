@@ -46,7 +46,7 @@ void virtio_dev_install(){
             virtio_device* vdev = alloc_virtdev(&devices[i]);
         	switch(devices[i].subsystem_id){
         		case VIRTIO_DEVICE_NET:
-                    kprintf("find network card\n");
+                    // kprintf("find network card\n");
         			break;//TODO: don't use it fornow
 		            if(!network_card_init(vdev)){
 		                vdev->inuse = 0;
@@ -55,7 +55,7 @@ void virtio_dev_install(){
 		            }
 	        		break;
 	        	case VIRTIO_DEVICE_GPU:
-                    kprintf("find gpu card\n");
+                    // kprintf("find gpu card\n");
 	        		if(!virtio_gpu_init(vdev)){
 	        			vdev->inuse = 0;
 	        		}else{

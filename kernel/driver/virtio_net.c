@@ -34,7 +34,7 @@ void network_card_setup(virtio_device* vdev){
     virtio_enable_interrupts(rx);
 
     pic_enable(vdev->pdev.irq,virtionet_handler);
-    kprintf("vdev irq: %d\n",vdev->pdev.irq);
+    // kprintf("vdev irq: %d\n",vdev->pdev.irq);
 }
 
 
@@ -48,7 +48,7 @@ int network_card_init(virtio_device* vdev){
     c |= VIRTIO_DRIVER;
     pdev->ops->set_status(&vdev->pdev,c);
     uint64_t device_feature = pdev->ops->get_features(pdev);
-    kprintf("device feature: %x\n",device_feature);
+    // kprintf("device feature: %x\n",device_feature);
     DISABLE_FEATURE(device_feature,VIRTIO_CTRL_VQ);
     DISABLE_FEATURE(device_feature,VIRTIO_GUEST_TSO4);
     DISABLE_FEATURE(device_feature,VIRTIO_GUEST_TSO6);
@@ -76,7 +76,7 @@ int network_card_init(virtio_device* vdev){
         kprintf("virtio init failed\n");
         return 0;
     }
-    show_device_status(vdev);
+    // show_device_status(vdev);
     return 1;
 }
 

@@ -51,14 +51,14 @@ int virtio_read_caps(virtio_pci_dev* pdev){
     }
     if(pdev->common_cfg == NULL || pdev->notify_base == NULL 
         || pdev->device_cfg == NULL || pdev->isr == NULL){
-        kprintf("no modern virtio pci device found\n");
+        // kprintf("no modern virtio pci device found\n");
         return -1;
     }
-    kprintf("modern virtio pci device found\n");
-    kprintf("common_cfg map at: %x\n",pdev->common_cfg);
-    kprintf("notify_base map at: %x\n",pdev->notify_base);
-    kprintf("device_cfg map at: %x\n",pdev->device_cfg);
-    kprintf("isr map at: %x\n",pdev->isr);
+    // kprintf("modern virtio pci device found\n");
+    // kprintf("common_cfg map at: %x\n",pdev->common_cfg);
+    // kprintf("notify_base map at: %x\n",pdev->notify_base);
+    // kprintf("device_cfg map at: %x\n",pdev->device_cfg);
+    // kprintf("isr map at: %x\n",pdev->isr);
     return 0;
 }
 

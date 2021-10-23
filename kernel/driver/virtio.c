@@ -114,13 +114,13 @@ void setup_virtqueue(virtio_device* vdev,int idx){
     queue->idx = idx;
     vdev->pdev.ops->setup_queue(&vdev->pdev,queue);
     queue->available->flags = 0;
-    kprintf(
-        "queue [%d] size: %x\n"
-        " desc addr:  %x available addr: %x used addr: %x\n"
-        " notify addr: %x\n"
-        ,idx,queue_size,queue->base_addr,queue->available,queue->used,
-        queue->notify_addr
-        );
+    // kprintf(
+    //     "queue [%d] size: %x\n"
+    //     " desc addr:  %x available addr: %x used addr: %x\n"
+    //     " notify addr: %x\n"
+    //     ,idx,queue_size,queue->base_addr,queue->available,queue->used,
+    //     queue->notify_addr
+    //     );
     return;
 }
 

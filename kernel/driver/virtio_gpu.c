@@ -17,7 +17,7 @@ int virtio_gpu_init(virtio_device* vdev){
     c |= VIRTIO_DRIVER;
     pdev->ops->set_status(&vdev->pdev,c);
     uint64_t device_feature = pdev->ops->get_features(pdev);
-    kprintf("gpu device feature: %x\n",device_feature);
+    // kprintf("gpu device feature: %x\n",device_feature);
 
     pdev->ops->set_features(pdev,device_feature);
     pdev->guest_feature = device_feature;
@@ -38,7 +38,7 @@ int virtio_gpu_init(virtio_device* vdev){
         kprintf("virtio gpu init failed\n");
         return 0;
     }
-    show_device_status(vdev);
+    // show_device_status(vdev);
     gpu_dev = vdev;
     return 1;
 }

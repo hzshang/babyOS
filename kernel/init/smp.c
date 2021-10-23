@@ -43,7 +43,7 @@ void start_thread(){
 }
 
 void cpu2_run(){
-	kprintf("hello from cpu2! waiting task from CPU0\n");
+	// kprintf("hello from cpu2! waiting task from CPU0\n");
 	while(1){
 		LOCK(taskLock);
 		void (*tmp)(void*);

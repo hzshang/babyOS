@@ -70,19 +70,18 @@ void pci_init(){
             devices[device_num].class_code = value >> 24;
             devices[device_num].subclass = (value>>16)&0xff;
 
-            kprintf("PCI at %x:%x vendor %x,device:%x\n"
-                    "    subsystemID: %x subsystem vendorID: %x irq: %d\n"
-                    "    class code: %x subclass:  %x\n",
-                    bus,device,devices[device_num].vendor,
-                    devices[device_num].device,
-                    devices[device_num].subsystem_id,
-                    devices[device_num].subsystem_vendorid,
-                    devices[device_num].irq,
-                    devices[device_num].class_code,
-                    devices[device_num].subclass
-                    );
+            // kprintf("PCI at %x:%x vendor %x,device:%x\n"
+            //         "    subsystemID: %x subsystem vendorID: %x irq: %d\n"
+            //         "    class code: %x subclass:  %x\n",
+            //         bus,device,devices[device_num].vendor,
+            //         devices[device_num].device,
+            //         devices[device_num].subsystem_id,
+            //         devices[device_num].subsystem_vendorid,
+            //         devices[device_num].irq,
+            //         devices[device_num].class_code,
+            //         devices[device_num].subclass
+            //         );
             device_num++;
-            get_c();
         }
     }
 }
@@ -96,7 +95,7 @@ void PCI_loadbars(Device* f){
         uint32_t rv = PCI_read(f->bus_id,f->device_id,0,i);
         int regnum = PCI_MAPREG_NUM(i);
         if(rv == 0){
-            kprintf("bar(%d) space size is 0\n",regnum);
+            // kprintf("bar(%d) space size is 0\n",regnum);
             continue;
         }
         uint32_t base, size;
@@ -108,11 +107,11 @@ void PCI_loadbars(Device* f){
             base = PCI_MAPREG_MEM_ADDR(oldv);
             //if(bar_size == 4)
             f->membase = base;
-            kprintf("bar(%d) membase(%s): %x,size: %x\n",regnum,bar_size == 4?"32bit":"64bit",base,size);
+            // kprintf("bar(%d) membase(%s): %x,size: %x\n",regnum,bar_size == 4?"32bit":"64bit",base,size);
         }else{
             size = PCI_MAPREG_IO_SIZE(rv);
             base = PCI_MAPREG_IO_ADDR(oldv);
-            kprintf("bar(%d) iobase: %x,size: %x\n",regnum,base,size);
+            // kprintf("bar(%d) iobase: %x,size: %x\n",regnum,base,size);
             f->iobase = base;
         }
         PCI_write(f->bus_id,f->device_id,0,i,oldv);
