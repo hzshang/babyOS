@@ -20,12 +20,20 @@ void intr_init(){
     lidt(&idt_pd);
 }
 
+void intr_enable(){
+    sti();
+}
+
+void intr_disable(){
+    cli();
+}
+
 void trap(struct trapframe *tf){
     uint32_t trap_num = tf->tf_trapno - IRQ_OFFSET;
     if(irq_array[trap_num]){
         irq_array[trap_num](tf);
     }else{
-        kprintf("unknown intr number: %d\n",tf->tf_trapno);
+        printf("unknown intr number: %d\n",tf->tf_trapno);
     }
 }
 

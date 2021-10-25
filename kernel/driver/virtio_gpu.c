@@ -3,7 +3,6 @@
 #include <libcc.h>
 #include <picirq.h>
 #include <x86.h>
-#include <kprintf.h>
 #include <virtio_dev.h>
 #include <virtio.h>
 #include <virtio_gpu.h>
@@ -25,7 +24,7 @@ int virtio_gpu_init(virtio_device* vdev){
     pdev->ops->set_status(pdev,c);
     uint8_t virtio_status = pdev->ops->get_status(pdev);
     if((virtio_status&VIRTIO_FEATURES_OK) == 0){
-        kprintf("gpu feature is not ok\n");
+        printf("gpu feature is not ok\n");
         return 0;
     }
     for(int i=0;i<QUEUE_COUNT;i++){
@@ -35,7 +34,7 @@ int virtio_gpu_init(virtio_device* vdev){
     pdev->ops->set_status(pdev,c);
     virtio_status = pdev->ops->get_status(pdev);
     if (virtio_status & VIRTIO_FAILED){
-        kprintf("virtio gpu init failed\n");
+        printf("virtio gpu init failed\n");
         return 0;
     }
     // show_device_status(vdev);

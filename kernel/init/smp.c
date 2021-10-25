@@ -2,9 +2,7 @@
 
 #include <x86.h>
 #include <clock.h>
-#include <kprintf.h>
 #include <libcc.h>
-
 #include <smp.h>
 
 #define STARTUP_CODE_ADDRESS 0x1000
@@ -35,15 +33,12 @@ void start_thread(){
 	babysleep(100);
 	*icr_addr = STARTUP_CODE_ADDRESS/0x1000 + 0x000C4600;
 	babysleep(100);
-	// not check
 	while(*lock == 0xdead){
 		babysleep(100);
 	}
-	// kprintf("cpu2 start!\n");
 }
 
 void cpu2_run(){
-	// kprintf("hello from cpu2! waiting task from CPU0\n");
 	while(1){
 		LOCK(taskLock);
 		void (*tmp)(void*);
@@ -51,30 +46,19 @@ void cpu2_run(){
 		void* tmp_arg = task_arg;
 		UNLOCK(taskLock);
 		task = 0;
-		// kprintf("Get task from CPU0, run it\n");
 		tmp(tmp_arg);
 	}
-	// while(cpu2_start){
-	// 	if(share_mem){
-	// 		asm(
-	// 			"here:\n"
-	// 			"movl %0,%%eax\n"
-	// 			"movl $0,(%%eax)\n"
-	// 			"movl %1,(%%eax)\n"
-	// 			"cmp $0,%2\n"
-	// 			"jne here\n"
-	// 			::"m"(share_mem),"d"(4650),"m"(cpu2_start)
-	// 		);
-	// 	}else{
-	// 		cpu_relax();
-	// 		kprintf("cpu relax\n");
-	// 	}
-	// }
-	// kprintf("race done\n");
-	// asm("hlt");
 }
 
 
-
+void create_task(void (*p)(void*),void* arg){
+    task = p;
+    task_arg = arg;
+    UNLOCK(taskLock);
+    while(task){
+        cpu_relax();
+    }
+    LOCK(taskLock);
+}
 
 

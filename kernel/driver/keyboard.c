@@ -8,7 +8,6 @@
 #include <keyboard.h>
 #include <x86.h>
 #include <screen.h>
-#include <kprintf.h>
 #include <picirq.h>
 #include <libcc.h>
 #define BUFFER_SIZE 0x100

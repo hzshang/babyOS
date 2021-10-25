@@ -6,7 +6,6 @@
  */
 
 #include <virtio_pci.h>
-#include <kprintf.h>
 
 #define PCI_MSIX_ENABLE 0x8000
 int virtio_read_caps(virtio_pci_dev* pdev){

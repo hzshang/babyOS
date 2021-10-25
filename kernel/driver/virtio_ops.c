@@ -1,6 +1,5 @@
 #include <virtio_pci.h>
 #include <virtio_ops.h>
-#include <kprintf.h>
 #define VIRTIO_PCI_HOST_FEATURES  0  /* host's supported features (32bit, RO)*/
 #define VIRTIO_PCI_GUEST_FEATURES 4  /* guest's supported features (32, RW) */
 #define VIRTIO_PCI_QUEUE_PFN      8  /* physical address of VQ (32, RW) */
@@ -177,7 +176,7 @@ void modern_notify_queue(virtio_pci_dev *pdev, virt_queue* vq){
 		*vq->notify_addr = vq->idx;
 		return;
 	}
-	abort("wtf");
+	// abort("wtf");
 }
 void modern_intr_detect(virtio_pci_dev *pdev){
 	

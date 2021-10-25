@@ -17,7 +17,7 @@ object = init/init.o init/initcpu2.o init/smp.o init/initcpu2.o\
 		 entry.o \
 		 heap/heap.o heap/physical_page.o
 
-CFLAGS :=$(INCLUDE_PATH) -c -ggdb -static -Wall -fno-stack-protector -nostdlib -Wno-builtin-declaration-mismatch
+CFLAGS :=$(INCLUDE_PATH) -fno-builtin-printf -c -ggdb -static -Wall -fno-stack-protector -nostdlib -Wno-builtin-declaration-mismatch
 
 all: $(kernel)
 	@echo "kernel compile success"

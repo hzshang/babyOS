@@ -24,5 +24,5 @@ void set_cursor(int, int);
 void get_cursor(int *, int *);
 void print_c(char, COLOUR, COLOUR);
 void put_c(char);
-
+void cga_init();
 #endif

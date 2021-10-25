@@ -4,7 +4,6 @@
 #include <libcc.h>
 #include <picirq.h>
 #include <x86.h>
-#include <kprintf.h>
 #include <virtio_pci.h>
 #include <virtio_net.h>
 #include <virtio_ops.h>
@@ -63,7 +62,7 @@ int network_card_init(virtio_device* vdev){
 
     uint8_t virtio_status = pdev->ops->get_status(pdev);
     if((virtio_status&VIRTIO_FEATURES_OK) == 0){
-        kprintf("feature is not ok\n");
+        printf("feature is not ok\n");
         return 0;
     }
     for(int i=0;i<QUEUE_COUNT;i++){
@@ -73,7 +72,7 @@ int network_card_init(virtio_device* vdev){
     pdev->ops->set_status(pdev,c);
     virtio_status = pdev->ops->get_status(pdev);
     if (virtio_status & VIRTIO_FAILED){
-        kprintf("virtio init failed\n");
+        printf("virtio init failed\n");
         return 0;
     }
     // show_device_status(vdev);
@@ -81,22 +80,22 @@ int network_card_init(virtio_device* vdev){
 }
 
 void virtionet_handler(struct trapframe* trap){
-    kprintf("read to recv packet\n");
+    printf("read to recv packet\n");
     virtio_device* vdev = &vdevs[0];
     virt_queue* vq = &vdev->queue[0];
     virtio_disable_interrupts(vq);
     uint8_t isr = vdev->pdev.ops->get_isr(&vdev->pdev);
-    kprintf("isr status: %d\n",isr);
+    printf("isr status: %d\n",isr);
 
     uint16_t idx = vq->last_used_index%vq->queue_size;
     uint16_t buf_idx = vq->used->ring[idx].index;
-    kprintf("buffer index: %d length: %d\n",buf_idx,vq->used->ring[idx].length);
+    printf("buffer index: %d length: %d\n",buf_idx,vq->used->ring[idx].length);
 
     while(1){
         uint32_t addr = vq->buffers[buf_idx].address&0xffffffff;
         uint32_t length = vq->buffers[buf_idx].length;
-        kprintf("recv data at addr:%x, length: %d\n",addr,length);
-        dumpmem((void*)addr,0x50);
+        // printf("recv data at addr:%x, length: %d\n",addr,length);
+        // dumpmem((void*)addr,0x50);
         if(vq->buffers[buf_idx].flags & VIRTIO_DESC_FLAG_NEXT){
             buf_idx = vq->buffers[buf_idx].next;
         }else{

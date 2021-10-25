@@ -7,7 +7,6 @@
 
 #include <heap.h>
 #include <stdio.h>
-#include <kprintf.h>
 chunk_ptr* bins_ptr = NULL;
 
 // install chunk to bins

@@ -91,3 +91,9 @@ print_c(char c, COLOUR fg, COLOUR bg) {
 	set_cursor(csr_x, csr_y);
 }
 
+void cga_init(){
+    for(int i=0;i<80;i++){
+        printf("\n");
+    }
+    set_cursor(0,0);
+}

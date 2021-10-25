@@ -4,7 +4,7 @@
 #include <libcc.h>
 #include <picirq.h>
 #include <x86.h>
-#include <kprintf.h>
+#include <libcc.h>
 #include <virtio_pci.h>
 #include <virtio_net.h>
 #include <virtio_ops.h>
@@ -51,7 +51,7 @@ bool virtio_queue_init(virt_queue* queue,uint16_t port,uint16_t idx){
     if(!queue_size || queue_size == 0xffff){
         return false;
     }
-    kprintf("queue size[%d]: %x\n",idx,queue_size);
+    printf("queue size[%d]: %x\n",idx,queue_size);
     uint32_t buffers_size = sizeof(virtq_desc)*queue_size;
     uint32_t available_size = (2 + queue_size )* sizeof(uint16_t);
     uint32_t used_size = sizeof(virtq_ring)*queue_size + 2*sizeof(uint16_t);
@@ -59,7 +59,7 @@ bool virtio_queue_init(virt_queue* queue,uint16_t port,uint16_t idx){
     uint8_t* buf = physical_alloc(page_count<<12);
 
     memset(buf,0,page_count<<12);
-    kprintf("queue buffer addr: %x\n",buf);
+    printf("queue buffer addr: %x\n",buf);
 
     queue->base_addr = buf;
     queue->available = (virtq_avail*)&buf[buffers_size];
@@ -193,7 +193,7 @@ void virtio_bug_trigger2(virtio_device* vdev){
     desc[2].flags = 0;
     desc[2].address = (uint64_t)(uint32_t)data;
     desc[2].length = 0xfffffeff;
-    kprintf("data addr: %x\n",data);
+    printf("data addr: %x\n",data);
     virtio_fill_buffer(vdev,1,desc,3,0);
 
 }

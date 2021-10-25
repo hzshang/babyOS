@@ -86,5 +86,7 @@ struct trapframe {
 
 void intr_init();
 void trap(struct trapframe *tf);
+void intr_enable();
+void intr_disable();
 
 #endif /* !TRAP_H */

@@ -2,7 +2,7 @@
 
 #include <smb.h>
 #include <pci.h>
-#include <kprintf.h>
+#include <libcc.h>
 
 Device* smb_dev;
 void smb_init(){
@@ -14,10 +14,10 @@ void smb_init(){
 		}
 	}
 	if(!dev){
-		// kprintf("can't find smb bus\n");
+		debug("can't find smb bus\n");
 		return;
 	}
 	smb_dev = dev;
 	PCI_loadbars(dev);
-	kprintf("smb io port: %x\n",dev->iobase);
+	debug("smb io port: %x\n",dev->iobase);
 }

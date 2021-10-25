@@ -5,7 +5,6 @@
 #include <virtio_gpu.h>
 #include <virtio_ops.h>
 #include <libcc.h>
-#include <kprintf.h>
 
 virtio_device vdevs[0x10];
 
@@ -71,24 +70,24 @@ void virtio_dev_install(){
 void show_device_status(virtio_device* vdev){
 
     uint16_t status = vdev->pdev.ops->get_status(&vdev->pdev);
-    kprintf("device status: ");
+    printf("device status: ");
     if(status & VIRTIO_FAILED){
-        kprintf("VIRTIO_FAILED");
+        printf("VIRTIO_FAILED");
     }
     if(status & VIRTIO_ACKNOWLEDGE){
-        kprintf("VIRTIO_ACKNOWLEDGE ");
+        printf("VIRTIO_ACKNOWLEDGE ");
     }
     if(status & VIRTIO_DRIVER){
-        kprintf("VIRTIO_DRIVER ");
+        printf("VIRTIO_DRIVER ");
     }
     if(status & VIRTIO_DRIVER_OK){
-        kprintf("VIRTIO_DRIVER_OK ");
+        printf("VIRTIO_DRIVER_OK ");
     }
     if(status & VIRTIO_FEATURES_OK){
-        kprintf("VIRTIO_FEATURES_OK ");
+        printf("VIRTIO_FEATURES_OK ");
     }
     if(status & VIRTIO_DEVICE_NEEDS_RESET){
-        kprintf("VIRTIO_DEVICE_NEEDS_RESET ");
+        printf("VIRTIO_DEVICE_NEEDS_RESET ");
     }
-    kprintf("\n");
+    printf("\n");
 }

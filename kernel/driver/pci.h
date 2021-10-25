@@ -55,6 +55,8 @@
 typedef struct {
     uint16_t bus_id;
     uint16_t device_id;
+    uint8_t func;
+    // uint32_t addr; // (bus<<16) | (device<<11) | func<<8) 
     uint16_t vendor;
     uint16_t device;
 
@@ -81,7 +83,7 @@ void PCI_writeBar(Device* d,int idx,uint32_t value);
 uint32_t PCI_readoff(Device*d,uint32_t offset);
 void PCI_loadbars(Device* f);
 
-extern Device devices[0x20];
+extern Device devices[];
 extern int device_num;
 
 
