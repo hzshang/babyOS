@@ -27,10 +27,12 @@ virtio_device* alloc_virtdev(Device* dev){
         // modern mode
         vdev->modern = true;
         vdev->pdev.ops = &modern_ops;
+        debug("use modern mode\n");
 
     }else{
         vdev->modern = false;
         vdev->pdev.ops = &legacy_ops;
+        debug("use legacy mode\n");
     }
     return vdev;
 }
@@ -45,8 +47,7 @@ void virtio_dev_install(){
             virtio_device* vdev = alloc_virtdev(&devices[i]);
         	switch(devices[i].subsystem_id){
         		case VIRTIO_DEVICE_NET:
-                    // kprintf("find network card\n");
-        			break;//TODO: don't use it fornow
+                    // printf("find network card\n");
 		            if(!network_card_init(vdev)){
 		                vdev->inuse = 0;
 		            }else{
@@ -54,7 +55,7 @@ void virtio_dev_install(){
 		            }
 	        		break;
 	        	case VIRTIO_DEVICE_GPU:
-                    // kprintf("find gpu card\n");
+                    // printf("find gpu card\n");
 	        		if(!virtio_gpu_init(vdev)){
 	        			vdev->inuse = 0;
 	        		}else{
@@ -62,6 +63,7 @@ void virtio_dev_install(){
 	        		}
 		        	break;
 		        default:
+                    debug("unknown virtio device: %d\n",devices[i].subsystem_id);
 			        break;
         	}
         }

@@ -14,7 +14,7 @@ void smb_init(){
 		}
 	}
 	if(!dev){
-		debug("can't find smb bus\n");
+		// debug("can't find smb bus\n");
 		return;
 	}
 	smb_dev = dev;

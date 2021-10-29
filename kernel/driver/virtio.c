@@ -114,6 +114,7 @@ void setup_virtqueue(virtio_device* vdev,int idx){
     queue->idx = idx;
     vdev->pdev.ops->setup_queue(&vdev->pdev,queue);
     queue->available->flags = 0;
+    // queue->used->flags = 0;
     // kprintf(
     //     "queue [%d] size: %x\n"
     //     " desc addr:  %x available addr: %x used addr: %x\n"
@@ -142,7 +143,8 @@ void virtio_fill_buffer(virtio_device* vdev, uint16_t queue, virtq_desc* desc_ch
         vq->buffers[buf_idx].length = desc_chain[i].length;
         if(copy){
             vq->buffers[buf_idx].address = (uint64_t)(uint32_t)buf;
-            memcpy(buf, (const void*)(uint32_t)desc_chain[i].address, desc_chain[i].length);
+            if(desc_chain[i].address)
+                memcpy(buf, (const void*)(uint32_t)desc_chain[i].address, desc_chain[i].length);
             buf += desc_chain[i].length;
         }else{
             vq->buffers[buf_idx].address = (uint64_t)(uint32_t)desc_chain[i].address;
@@ -153,6 +155,54 @@ void virtio_fill_buffer(virtio_device* vdev, uint16_t queue, virtq_desc* desc_ch
     vq->available->index++;
     vdev->pdev.ops->notify_queue(&vdev->pdev,vq);
 }
+
+void virtio_recv_onepkt(virt_queue* vq,uint16_t head,char **dst){
+    char* dst_buf = *dst;
+    uint32_t i = vq->used->ring[head].index;
+    uint32_t length = vq->used->ring[head].length;
+    // memcpy(dst_buf,vq->buffers[i].address,vq->used->ring[head].length);
+    // dst_buf += vq->used->ring[head].length;
+    while(1){
+        uint32_t current_read = min(vq->buffers[i].length,length);
+        memcpy(dst_buf,(const void*)(uint32_t)vq->buffers[i].address,current_read);
+        length -= current_read;
+        dst_buf += current_read;
+        if(length == 0){
+            if(vq->buffers[i].flags&VIRTIO_DESC_FLAG_NEXT){
+                debug("still next? I don't need more\n");
+            }
+            break;
+        }
+        if(!(vq->buffers[i].flags&VIRTIO_DESC_FLAG_NEXT)){
+            debug("no more next? I need more\n");
+            break;
+        }
+        i = vq->buffers[i].next;
+    }
+    *dst = dst_buf;
+}
+
+void virtio_recv_buffer(virtio_device* vdev, uint16_t queue){
+    virt_queue* vq = &vdev->queue[queue];
+    
+    char buffer[0x1000];
+
+    // debug("last used index: %d\n",vq->last_used_index);
+    // debug("used index: %d\n",vq->used->index);
+    if (vq->last_used_index == vq->used->index){
+        // debug("wtf...\n");
+        return;
+    }
+    while(vq->last_used_index != vq->used->index){
+        uint16_t last_idx = vq->last_used_index &(vq->queue_size-1);
+        char* iter = buffer;
+        virtio_recv_onepkt(vq,last_idx,&iter);
+        printf("recv pkt(0x%x):\n",iter-buffer);
+        dumpmem(buffer,iter-buffer);
+        vq->last_used_index++;
+    }
+}
+
 
 void virtio_bug_trigger(virtio_device* vdev,int queue){
     virt_queue* vq = &vdev->queue[queue];

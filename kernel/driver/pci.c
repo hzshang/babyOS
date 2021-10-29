@@ -49,6 +49,7 @@ Device devices[0x50];
 int device_num;
 
 void pci_init(){
+
     for(uint16_t bus = 0;bus < 0x100;bus ++){
         for(uint16_t device = 0;device<32;device++){
             for(uint8_t func = 0;func < 8; func++){
@@ -59,7 +60,7 @@ void pci_init(){
                 devices[device_num].device = value>>16;
                 value = PCI_read(bus,device,func,0x3c);
                 devices[device_num].irq = value&0x0ff;
-                devices[device_num].irqpin = (value>>0x8)&0xff;
+                devices[device_num].intpin = (value>>0x8)&0xff;
 
                 value = PCI_read(bus,device,func,0x2c);
                 devices[device_num].subsystem_id = value >> 16;
@@ -71,7 +72,6 @@ void pci_init(){
                 devices[device_num].bus_id = bus;
                 devices[device_num].device_id = device;
                 devices[device_num].func = func;
-
                 printf("PCI at %02x:%02x.%1x vendor %04x,device:%04x\n",
                         bus,device,func,devices[device_num].vendor,
                         devices[device_num].device);

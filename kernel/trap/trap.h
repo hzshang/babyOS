@@ -88,5 +88,6 @@ void intr_init();
 void trap(struct trapframe *tf);
 void intr_enable();
 void intr_disable();
-
+void registerIRQ(int cpunum,int irq,void (*fn)(struct trapframe*));
+void register_intr_handler(int intr,void (*fn)(struct trapframe*));
 #endif /* !TRAP_H */

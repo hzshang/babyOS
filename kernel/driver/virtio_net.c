@@ -9,7 +9,7 @@
 #include <virtio_ops.h>
 #include <virtio.h>
 #include <virtio_dev.h>
-
+virtio_device* network_card;
 void network_card_setup(virtio_device* vdev){
 
     virt_queue* rx = &vdev->queue[0]; // Receive
@@ -28,12 +28,16 @@ void network_card_setup(virtio_device* vdev){
     tx->chunk_size = FRAME_SIZE;
     vdev->pdev.ops->notify_queue(&vdev->pdev,tx);
     // PCI enable
-
     void virtionet_handler(struct trapframe* trap);
     virtio_enable_interrupts(rx);
-
-    pic_enable(vdev->pdev.irq,virtionet_handler);
-    // kprintf("vdev irq: %d\n",vdev->pdev.irq);
+    rx->used->flags = 1;
+    rx->available->flags = 0;
+    tx->used->flags = 0;
+    tx->available->flags = 0;
+    network_card = vdev;
+    register_intr_handler(vdev->pdev.irq + IRQ_OFFSET,virtionet_handler);
+    pic_enable(vdev->pdev.irq);
+    PCI_enableBusmaster(vdev->pdev.pci);
 }
 
 
@@ -47,16 +51,15 @@ int network_card_init(virtio_device* vdev){
     c |= VIRTIO_DRIVER;
     pdev->ops->set_status(&vdev->pdev,c);
     uint64_t device_feature = pdev->ops->get_features(pdev);
-    // kprintf("device feature: %x\n",device_feature);
-    DISABLE_FEATURE(device_feature,VIRTIO_CTRL_VQ);
     DISABLE_FEATURE(device_feature,VIRTIO_GUEST_TSO4);
     DISABLE_FEATURE(device_feature,VIRTIO_GUEST_TSO6);
     DISABLE_FEATURE(device_feature,VIRTIO_GUEST_UFO);
     DISABLE_FEATURE(device_feature,VIRTIO_EVENT_IDX);
     DISABLE_FEATURE(device_feature,VIRTIO_MRG_RXBUF);
-    DISABLE_FEATURE(device_feature,VIRTIO_F_NOTIFICATION_DATA);
+    ENABLE_FEATURE(device_feature,VIRTIO_CSUM);
     pdev->ops->set_features(pdev,device_feature);
     pdev->guest_feature = device_feature;
+    debug("current device feature: 0x%08x\n",device_feature);
     c |= VIRTIO_FEATURES_OK;
     pdev->ops->set_status(pdev,c);
 
@@ -80,34 +83,46 @@ int network_card_init(virtio_device* vdev){
 }
 
 void virtionet_handler(struct trapframe* trap){
-    printf("read to recv packet\n");
-    virtio_device* vdev = &vdevs[0];
+    printf("callback to recv packet\n");
+    virtio_device* vdev = network_card;
+    if(vdev == NULL){
+        printf("network card is null\n");
+        return;
+    }
+    uint8_t isr = vdev->pdev.ops->get_isr(&vdev->pdev);
+    if(isr != 1)
+        return;
+    // debug("isr status: %d\n",isr);
     virt_queue* vq = &vdev->queue[0];
     virtio_disable_interrupts(vq);
-    uint8_t isr = vdev->pdev.ops->get_isr(&vdev->pdev);
-    printf("isr status: %d\n",isr);
-
-    uint16_t idx = vq->last_used_index%vq->queue_size;
-    uint16_t buf_idx = vq->used->ring[idx].index;
-    printf("buffer index: %d length: %d\n",buf_idx,vq->used->ring[idx].length);
-
-    while(1){
-        uint32_t addr = vq->buffers[buf_idx].address&0xffffffff;
-        uint32_t length = vq->buffers[buf_idx].length;
-        // printf("recv data at addr:%x, length: %d\n",addr,length);
-        // dumpmem((void*)addr,0x50);
-        if(vq->buffers[buf_idx].flags & VIRTIO_DESC_FLAG_NEXT){
-            buf_idx = vq->buffers[buf_idx].next;
-        }else{
-            break;
-        }
-    }
-    vq->last_used_index++;
+    virtio_recv_buffer(vdev,0);
     virtq_desc buffer;
     buffer.length = FRAME_SIZE;
     buffer.flags = VIRTIO_DESC_FLAG_WRITE_ONLY;
     buffer.address = 0;
-    virtio_enable_interrupts(vq);
     virtio_fill_buffer(vdev, 0, &buffer, 1,1);
+    virtio_enable_interrupts(vq);
     return;
 }
+
+
+void network_send_packet(uint8_t* pkt,size_t length){
+    virtio_device* vdev = network_card;
+    virtq_desc desc[2];
+    virtio_net_hdr hr;
+    hr.flags = VIRTIO_NET_HDR_F_NEEDS_CSUM;
+    hr.gso_type = 0;
+    hr.csum_start = 0;
+    hr.csum_offset = length;
+    desc[0].address = (uint64_t)(uint32_t)&hr;
+    desc[0].length = sizeof(hr);
+    desc[0].flags = 0;
+    desc[1].address = (uint64_t)(uint32_t)pkt;
+    desc[1].length = length;
+    desc[1].flags = 0;
+    virtio_fill_buffer(vdev, 1, desc, 2,1);
+}
+
+
+
+

@@ -13,7 +13,7 @@
 static uint16_t irq_mask = 0xFFFF & ~(1 << IRQ_SLAVE);
 static bool did_init = 0;
 
-void (*irq_array[0x20])(struct trapframe*);
+
 
 static void pic_setmask(uint16_t mask) {
     irq_mask = mask;
@@ -23,12 +23,11 @@ static void pic_setmask(uint16_t mask) {
     }
 }
 
-void pic_enable(unsigned int irq,void (*fn)(struct trapframe*)) {
-    if(irq >= sizeof(irq_array)/sizeof(*irq_array)){
-        return;
-    }
+void pic_enable(unsigned int irq) {
+    // if(irq >= sizeof(irq_array)/sizeof(*irq_array)){
+    //     return;
+    // }
     pic_setmask(irq_mask & ~(1 << irq));
-    irq_array[irq] = fn;
 }
 
 /* pic_init - initialize the 8259A interrupt controllers */

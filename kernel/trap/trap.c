@@ -6,12 +6,15 @@
 #include <stdio.h>
 #include <clock.h>
 #include <picirq.h>
+#include <ioapic.h>
+#include <lapic.h>
 static struct gatedesc idt[256] = {{0}};
 static struct pseudodesc idt_pd = {
     sizeof(idt) - 1, (uintptr_t)idt
 };
 
 void intr_init(){
+
     extern uintptr_t __vectors[];
     for(int i=0;i<sizeof(idt)/sizeof(struct gatedesc);i++){
         SETGATE(idt[i],0,GD_KTEXT, __vectors[i], DPL_KERNEL);
@@ -27,13 +30,28 @@ void intr_enable(){
 void intr_disable(){
     cli();
 }
+void (*intr_array[0x100])(struct trapframe*);
 
 void trap(struct trapframe *tf){
-    uint32_t trap_num = tf->tf_trapno - IRQ_OFFSET;
-    if(irq_array[trap_num]){
-        irq_array[trap_num](tf);
+    // uint32_t trap_num = tf->tf_trapno - IRQ_OFFSET;
+    if(intr_array[tf->tf_trapno]){
+        intr_array[tf->tf_trapno](tf);
     }else{
         printf("unknown intr number: %d\n",tf->tf_trapno);
     }
 }
+
+void register_intr_handler(int intr,void (*fn)(struct trapframe*)){
+    intr_array[intr] = fn;
+}
+
+
+
+
+
+
+
+
+
+
 

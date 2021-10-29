@@ -5,7 +5,7 @@
  * Distributed under terms of the MIT license.
  */
 #include <types.h>
-
+#include <libcc.h>
 #include <physical_page.h>
 static uint8_t* page_ptr;
 
@@ -13,6 +13,7 @@ uint8_t* physical_alloc(uint32_t size){
     size = (size+0xfff)&(~0xfff);
     uint8_t* page = page_ptr;
     page_ptr += size;
+    memset(page,0,size);
     return page;
 }
 

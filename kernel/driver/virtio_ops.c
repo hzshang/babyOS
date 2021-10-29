@@ -193,7 +193,6 @@ const struct virtio_ops legacy_ops = {
 	.set_status	= legacy_set_status,
 	.get_features	= legacy_get_features,
 	.set_features	= legacy_set_features,
-	// .features_ok	= legacy_features_ok,
 	.get_isr	= legacy_get_isr,
 	.set_config_irq	= legacy_set_config_irq,
 	.set_queue_irq  = legacy_set_queue_irq,

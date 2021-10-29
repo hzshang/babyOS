@@ -9,7 +9,9 @@
 #include <x86.h>
 #include <screen.h>
 #include <picirq.h>
+#include <mp.h>
 #include <libcc.h>
+#include <trap.h>
 #define BUFFER_SIZE 0x100
 #define COMMAND_PORT 0x64
 #define DATA_PORT 0x60
@@ -48,8 +50,17 @@ void keyboard_init(){
     outb(COMMAND_PORT,0x60);
     outb(DATA_PORT,status);
     outb(DATA_PORT,0xf4);
-    pic_enable(IRQ_KBD,keyboard_callback);
+
+    pic_enable(IRQ_KBD);
+    register_intr_handler(IRQ_KBD + IRQ_OFFSET,keyboard_callback);
 }
+
+//     // search
+//     int pin = getIRQPin("ISA ",IRQ_KBD);
+//     debug("keyboard pin number: %d\n",pin);
+//     if(pin != -1)
+//         registerIRQ(0,pin,keyboard_callback);
+// }
 
 bool shift = false;
 void keyboard_callback(struct trapframe* tf){

@@ -36,6 +36,10 @@
 #define VIRTIO_EVENT_IDX            29
 #define VIRTIO_F_NOTIFICATION_DATA  38
 
+#define VIRTIO_F_RING_PACKED        34
+#define VIRTIO_F_VERSION_1      32
+
+
 #define VIRTIO_ACKNOWLEDGE 1
 #define VIRTIO_DRIVER 2
 #define VIRTIO_FAILED 128
@@ -65,6 +69,6 @@ void virtio_disable_interrupts(virt_queue* vq);
 void virtio_enable_interrupts(virt_queue* vq);
 void virtio_fill_buffer(virtio_device* vdev, uint16_t queue, virtq_desc* desc_chain, uint32_t count,uint32_t copy);
 void setup_virtqueue(virtio_device* vdev,int idx);
-
+void virtio_recv_buffer(virtio_device* vdev, uint16_t queue);
 
 #endif /* !VIRTIO_H */

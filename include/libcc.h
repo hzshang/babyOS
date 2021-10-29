@@ -10,4 +10,11 @@ int printf(const char *format, ...);
 int debug(const char *format, ...);
 void set_loglevel(int lv);
 void abort(const char *fmt, ...);
+void dumpmem(void *addr,uint32_t size);
+static inline uint32_t min(uint32_t a,uint32_t b){
+	return a>b?b:a;
+}
+static inline uint32_t max(uint32_t a,uint32_t b){
+	return a>b?a:b;
+}
 #endif

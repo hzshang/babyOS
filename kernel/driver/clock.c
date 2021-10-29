@@ -2,7 +2,7 @@
 #include <trap.h>
 #include <stdio.h>
 #include <picirq.h>
-
+#include <ioapic.h>
 /* *
  * Support for time-related hardware gadgets - the 8253 timer,
  * which generates interruptes on IRQ-0.
@@ -25,26 +25,18 @@
 #define TICK_NUM 100
 volatile size_t ticks;
 
-/* *
- * clock_init - initialize 8253 clock to interrupt 100 times per second,
- * and then enable IRQ_TIMER.
- * */
 void ticks_callback(struct trapframe* tf){
     ticks++;
-    if(ticks%TICK_NUM == 0){
-//        kprintf("%d ticks\n",TICK_NUM);
-    }
+    // if(ticks % TICK_NUM == 0)
+        // printf("%d ticks\n",TICK_NUM);
 }
 
 void clock_init(void) {
-    // set 8253 timer-chip
     outb(TIMER_MODE, TIMER_SEL0 | TIMER_RATEGEN | TIMER_16BIT);
     outb(IO_TIMER1, TIMER_DIV(100) % 256);
     outb(IO_TIMER1, TIMER_DIV(100) / 256);
-    // initialize time counter 'ticks' to zero
-    ticks = 0;
-    // kprintf("setup timer interrupts\n");
-    pic_enable(IRQ_TIMER,ticks_callback);
+    pic_enable(IRQ_TIMER);
+    register_intr_handler(IRQ_TIMER + IRQ_OFFSET,ticks_callback);
 }
 
 

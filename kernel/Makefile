@@ -7,8 +7,11 @@ libc :=../libs/libc.so
 
 
 object = init/init.o init/initcpu2.o init/smp.o init/initcpu2.o\
-		 driver/pci.o\
-		 driver/picirq.o driver/clock.o driver/keyboard.o \
+		 init/mp.o init/lapic.o init/ioapic.o\
+		 init/cpu.o \
+		 driver/pci.o \
+		 driver/picirq.o \
+		 driver/clock.o driver/keyboard.o \
 		 driver/virtio.o driver/virtio_pci.o driver/virtio_ops.o driver/virtio_net.o\
 		 driver/virtio_dev.o driver/virtio_gpu.o \
 		 driver/smb.o \

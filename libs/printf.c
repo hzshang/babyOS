@@ -24,7 +24,7 @@
 	replace outbyte(c) by your own function call.
 */
 // #define putchar(c) outbyte(c)
-
+#include <types.h>
 static void printchar(char **str, int c)
 {
 	extern int put_c(int c);
@@ -199,7 +199,7 @@ void abort(const char *fmt, ...){
 	print(0,varg);
 }
 static int log_level = 1;
-int debug(const char *fmt, ...){
+void debug(const char *fmt, ...){
 	if(log_level){
 		register int *varg = (int *)(&fmt);
 		print(0,varg);
@@ -207,6 +207,20 @@ int debug(const char *fmt, ...){
 }
 void set_loglevel(int lv){
 	log_level = lv;
+}
+
+void dumpmem(void *addr,int size){
+    int i=0;
+    uint8_t* ptr = addr;
+    for(;i<size;i+=0x10){
+        printf("%08x: %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x\n",(int)ptr,
+        	ptr[0],ptr[1],ptr[2],ptr[3],
+        	ptr[4],ptr[5],ptr[6],ptr[7],
+        	ptr[8],ptr[9],ptr[10],ptr[11],
+        	ptr[12],ptr[13],ptr[14],ptr[15]
+        	);
+        ptr += 0x10;
+    }
 }
 
 

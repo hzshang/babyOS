@@ -38,13 +38,11 @@ gdb:$(img)
 
 qemu: 
 	sudo $(QEMU) $(img) -machine pc\
-		-netdev tap,id=n1,ifname=aaa0 \
-		-device virtio-net-pci,netdev=n1,mac=cc:dd:ee:ff:aa:bb \
+		-netdev tap,id=n1,ifname=tap100 \
+		-device virtio-net-pci,netdev=n1,mac=cc:dd:ee:ff:aa:bb,disable-modern="on" \
 		-smp 2 -curses
 
 	#  
-
-
 	# -enable-kvm \
 	#		-monitor stdio
 

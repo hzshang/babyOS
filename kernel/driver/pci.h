@@ -64,7 +64,9 @@ typedef struct {
     uint32_t membase;
 
     uint8_t irq;
-    uint8_t irqpin;
+    uint8_t intpin;
+    uint8_t ioapicPin;
+    uint8_t ioapicid;
     uint8_t subsystem_id;
     uint8_t subsystem_vendorid;
     uint8_t class_code;

@@ -18,8 +18,8 @@ typedef struct{
 } virtq_avail;
 
 typedef struct {
-    uint16_t index;
-    uint16_t length;
+    uint32_t index;
+    uint32_t length;
 } virtq_ring;
 
 typedef struct{
