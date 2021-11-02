@@ -67,6 +67,24 @@ insl(uint32_t port, void *addr, int cnt) {
             : "d" (port), "0" (addr), "1" (cnt)
             : "memory", "cc");
 }
+static inline void
+insw(uint32_t port, void *addr, int cnt) {
+    asm volatile (
+            "cld;"
+            "repne; insw;"
+            : "=D" (addr), "=c" (cnt)
+            : "d" (port), "0" (addr), "1" (cnt)
+            : "memory", "cc");
+}
+static inline void
+outsw(uint32_t port, void *addr, int cnt) {
+    asm volatile (
+            "cld;"
+            "repne; outsw;"
+            : "=D" (addr), "=c" (cnt)
+            : "d" (port), "0" (addr), "1" (cnt)
+            : "memory", "cc");
+}
 
 static inline void
 outb(uint16_t port, uint8_t data) {

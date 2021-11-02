@@ -62,6 +62,7 @@ typedef struct {
 
     uint32_t iobase;
     uint32_t membase;
+    uint32_t iosize;
 
     uint8_t irq;
     uint8_t intpin;
@@ -71,6 +72,8 @@ typedef struct {
     uint8_t subsystem_vendorid;
     uint8_t class_code;
     uint8_t subclass;
+    uint8_t prog_if;
+    uint8_t revision_id;
     uint32_t reg_base[6];
     uint32_t reg_size[6];
 }Device;

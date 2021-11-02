@@ -66,6 +66,9 @@ void pci_init(){
                 devices[device_num].subsystem_id = value >> 16;
                 devices[device_num].subsystem_vendorid = value&0xffff;
                 value = PCI_read(bus,device,func,0x8);
+                devices[device_num].revision_id = value&0xff;
+                devices[device_num].prog_if = (value>>8)&0xff;
+
                 devices[device_num].class_code = value >> 24;
                 devices[device_num].subclass = (value>>16)&0xff;
 

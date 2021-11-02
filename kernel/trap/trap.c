@@ -38,6 +38,7 @@ void trap(struct trapframe *tf){
         intr_array[tf->tf_trapno](tf);
     }else{
         printf("unknown intr number: %d\n",tf->tf_trapno);
+        printf("eip at: 0x%08x\n",tf->tf_eip);
     }
 }
 

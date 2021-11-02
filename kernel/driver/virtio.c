@@ -56,7 +56,7 @@ bool virtio_queue_init(virt_queue* queue,uint16_t port,uint16_t idx){
     uint32_t available_size = (2 + queue_size )* sizeof(uint16_t);
     uint32_t used_size = sizeof(virtq_ring)*queue_size + 2*sizeof(uint16_t);
     uint32_t page_count = PAGE_COUNT(buffers_size+available_size) + PAGE_COUNT(used_size);
-    uint8_t* buf = physical_alloc(page_count<<12);
+    uint8_t* buf = physical_alloc(page_count<<12,0x1000);
 
     memset(buf,0,page_count<<12);
     printf("queue buffer addr: %x\n",buf);
@@ -106,7 +106,7 @@ void setup_virtqueue(virtio_device* vdev,int idx){
     uint32_t available_size = (2 + queue_size )* sizeof(uint16_t);
     uint32_t used_size = sizeof(virtq_ring)*queue_size + 2*sizeof(uint16_t);
     uint32_t page_count = PAGE_COUNT(buffers_size+available_size) + PAGE_COUNT(used_size);
-    uint8_t* buf = physical_alloc(page_count<<12);
+    uint8_t* buf = physical_alloc(page_count<<12,0x1000);
     memset(buf,0,page_count<<12);
     queue->base_addr = buf;
     queue->available = (virtq_avail*)&buf[buffers_size];
@@ -197,8 +197,8 @@ void virtio_recv_buffer(virtio_device* vdev, uint16_t queue){
         uint16_t last_idx = vq->last_used_index &(vq->queue_size-1);
         char* iter = buffer;
         virtio_recv_onepkt(vq,last_idx,&iter);
-        printf("recv pkt(0x%x):\n",iter-buffer);
-        dumpmem(buffer,iter-buffer);
+        // printf("recv pkt(0x%x):\n",iter-buffer);
+        // dumpmem(buffer,iter-buffer);
         vq->last_used_index++;
     }
 }

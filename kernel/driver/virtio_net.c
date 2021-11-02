@@ -59,7 +59,7 @@ int network_card_init(virtio_device* vdev){
     ENABLE_FEATURE(device_feature,VIRTIO_CSUM);
     pdev->ops->set_features(pdev,device_feature);
     pdev->guest_feature = device_feature;
-    debug("current device feature: 0x%08x\n",device_feature);
+    // debug("current device feature: 0x%08x\n",device_feature);
     c |= VIRTIO_FEATURES_OK;
     pdev->ops->set_status(pdev,c);
 
@@ -83,7 +83,7 @@ int network_card_init(virtio_device* vdev){
 }
 
 void virtionet_handler(struct trapframe* trap){
-    printf("callback to recv packet\n");
+    // printf("callback to recv packet\n");
     virtio_device* vdev = network_card;
     if(vdev == NULL){
         printf("network card is null\n");

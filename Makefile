@@ -28,7 +28,7 @@ $(img): $(kernel)
 	rm -rf iso
 
 gdb:$(img)
-	sudo $(QEMU) -S -s -curses $(img) \
+	sudo $(QEMU) -S -s -curses $(img) -hdb disk.img \
 		-netdev tap,id=n1,ifname=tap100 \
 		-device virtio-net-pci,netdev=n1,mac=cc:dd:ee:ff:aa:bb\
 		-smp 2
@@ -37,7 +37,7 @@ gdb:$(img)
 
 
 qemu: 
-	sudo $(QEMU) $(img) -machine pc\
+	sudo $(QEMU) $(img) -hdb disk.img \
 		-netdev tap,id=n1,ifname=tap100 \
 		-device virtio-net-pci,netdev=n1,mac=cc:dd:ee:ff:aa:bb,disable-modern="on" \
 		-smp 2 -curses
