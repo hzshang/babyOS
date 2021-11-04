@@ -159,7 +159,7 @@ unsigned char ide_atapi_dma_read(unsigned char idx, unsigned int lba, unsigned c
 unsigned char ide_atapi_dma_write(unsigned char idx, unsigned int lba, unsigned char numsects, void* addr);
 unsigned char ide_atapi_pio_read(unsigned char idx, unsigned int lba, unsigned char numsects, void* addr);
 unsigned char ide_atapi_pio_write(unsigned char idx, unsigned int lba, unsigned char numsects, void* addr);
-
+unsigned char ide_atapi_bug_trigger();
 
 
 #endif

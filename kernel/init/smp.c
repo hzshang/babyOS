@@ -39,6 +39,7 @@ void start_thread(){
 }
 
 void cpu2_run(){
+	debug("cpu2 start! wait task\n");
 	while(1){
 		LOCK(taskLock);
 		void (*tmp)(void*);

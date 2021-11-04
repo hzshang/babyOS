@@ -57,83 +57,26 @@ void kern_init(multiboot_info_t* mbd, unsigned int magic){
             if(mmmt->type == MULTIBOOT_MEMORY_AVAILABLE) {}
         }
     }
-    // start_thread();
+    start_thread();
     printf("welcome come myOS!\n");
-    void network_send_packet(uint8_t* pkt,size_t length);
-    
+    // void network_send_packet(uint8_t* pkt,size_t length);
     // ide_enable_dma(1);
     // ide_enable_dma(1);
-    dma_test();
-}
-
-void dma_test(){
-/*
-在Parallel ATA DMA/PIO 均通过
-在QEMU ATA PIO通过 DMA未通过
-
-ATAPI均未通过
-*/
-    int enable_dma = 0;
-    int ata_device = 0;
-    int atapi_device = 1;
-    int nsecs = 1;
-    int lba = 0;
+    // dma_test();
     while(1){
-
-    printf("\n1> read from device\n");
-    printf("2> write to device\n");
-    printf("3> switch mode\n");
-    printf("current mode: %s\n",(char* []){"PIO","DMA"}[enable_dma]);
-    printf("input cmd: ");
-    uint8_t* tmp_buffer = physical_alloc(0x400,0x10000);
-    char a = get_c();
-    switch(a){
-        case '1':
-        {
-            printf("\nread from Device [1] ATA [2] ATAPI ?");
-            char x = get_c();
-            memset(tmp_buffer,'\xcc',0x400);
-            if(x == '1'){
-                ide_read_sectors(ata_device,nsecs,lba,tmp_buffer);
-            }else{
-                ide_read_sectors(atapi_device,nsecs,lba,tmp_buffer);
-            }
-            dumpmem(tmp_buffer,0x50);
+        debug("press 1\n");
+        char c = get_c();
+        switch(c){
+            case '1':
+                debug("ready to crash\n");
+                ide_atapi_bug_trigger();
+                break;
+            default:
+                break;
         }
-            break;
-        case '2':
-        {
-            printf("\nRead a char: ");
-            char x = get_c();
-            memset(tmp_buffer,x,0x400);
-            printf("\nDevice [1] ATA [2] ATAPI ?");
-            char o = get_c();
-            if(o == '1'){
-                ide_write_sectors(ata_device,nsecs,lba,tmp_buffer);
-                printf("\nwrite char '%c' to ATA\n",x);
-            }else{
-                ide_write_sectors(atapi_device,nsecs,lba,tmp_buffer);
-                printf("\nwrite char '%c' to ATAPI\n",x);
-            }
-        }
-            break;
-        case '3':
-            if(enable_dma){
-                enable_dma = 0;
-                ide_disable_dma(ata_device);
-                ide_disable_dma(atapi_device);
-            }else{
-                enable_dma = 1;
-                ide_enable_dma(ata_device);
-                ide_enable_dma(atapi_device);
-            }
-            break;
-        default:
-            break;
-    }
-
     }
 }
+
 
 
 
