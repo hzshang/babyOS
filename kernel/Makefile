@@ -12,7 +12,7 @@ object = init/init.o init/initcpu2.o init/smp.o init/initcpu2.o\
 		 driver/virtio.o driver/virtio_pci.o driver/virtio_ops.o driver/virtio_net.o\
 		 driver/virtio_dev.o driver/virtio_gpu.o \
 		 driver/smb.o driver/pci.o driver/picirq.o driver/clock.o \
-		 driver/disk/ide.o \
+		 driver/disk/ide.o driver/disk/ata.o driver/disk/atapi.o \
 		 mm/pmm.o\
 		 trap/vector.o trap/trap.o trap/trapenter.o \
 		 entry.o \
@@ -41,4 +41,5 @@ trap/trapenter.o: trap/trapenter.S
 clean:
 	$(RM) $(kernel)
 	$(RM) */*.o
+	$(RM) */*/*.o
 	$(RM) entry.o

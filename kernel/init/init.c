@@ -19,7 +19,7 @@
 #include <ioapic.h>
 #include <lapic.h>
 #include <ide.h>
-uint8_t tmp_buffer[2048];
+void dma_test();
 void kern_init(multiboot_info_t* mbd, unsigned int magic){
     extern char bss_start[],bss_end[];
     memset(bss_start,0,bss_end-bss_start);
@@ -43,57 +43,97 @@ void kern_init(multiboot_info_t* mbd, unsigned int magic){
 
     intr_enable();
     ide_init();
-
+    /* Make sure the magic number matches for memory mapping*/
+    if(magic == MULTIBOOT_BOOTLOADER_MAGIC && (mbd->flags >> 6 & 0x1)) {
+        /* Loop through the memory map and display the values */
+        int i;
+        for(i = 0; i < mbd->mmap_length;
+                i += sizeof(multiboot_memory_map_t))
+        {
+            multiboot_memory_map_t* mmmt =
+                (multiboot_memory_map_t*) (mbd->mmap_addr + i);
+            printf("Start Addr: 0x%08x | Length: 0x%08x | Size: 0x%08x | Type: %d\n",
+                    mmmt->addr, mmmt->len, mmmt->size, mmmt->type);
+            if(mmmt->type == MULTIBOOT_MEMORY_AVAILABLE) {}
+        }
+    }
     // start_thread();
     printf("welcome come myOS!\n");
     void network_send_packet(uint8_t* pkt,size_t length);
     
-        ide_enable_dma(0);
-        ide_enable_dma(1);
-        int enable = 1;
-    while(1){
-        char a = get_c();
-        int idx = 0;
-        int lba = 0;
-        int nsecs = 1;
-        
-
-        debug("opcode: %c\n",a);
-        switch(a){
-            case 'a':
-                printf("read using %s\n",enable?"dma":"pio");
-                memset(tmp_buffer,'\xcc',sizeof(tmp_buffer));
-                ide_read_sectors(idx,nsecs,lba,tmp_buffer);
-                printf("read from ide:\n");
-                dumpmem(tmp_buffer,0x50);
-                break;
-            case 'b':
-                char x = get_c();
-                printf("write using %s\n",enable?"dma":"pio");
-                memset(tmp_buffer,x,sizeof(tmp_buffer));
-                ide_write_sectors(idx,nsecs,lba,tmp_buffer);
-                printf("write %c to ide\n",x);
-                break;
-            case 'c':
-                if(enable){
-                    printf("disable dma\n");
-                    enable = 0;
-                    ide_disable_dma(0);
-                    ide_disable_dma(1);
-                }else{
-                    printf("enable dma\n");
-                    enable = 1;
-                    ide_enable_dma(0);
-                    ide_enable_dma(1);
-                }
-                break;
-            default:
-                break;
-        }
-    }
+    // ide_enable_dma(1);
+    // ide_enable_dma(1);
+    dma_test();
 }
 
+void dma_test(){
+/*
+在Parallel ATA DMA/PIO 均通过
+在QEMU ATA PIO通过 DMA未通过
 
+ATAPI均未通过
+*/
+    int enable_dma = 0;
+    int ata_device = 0;
+    int atapi_device = 1;
+    int nsecs = 1;
+    int lba = 0;
+    while(1){
+
+    printf("\n1> read from device\n");
+    printf("2> write to device\n");
+    printf("3> switch mode\n");
+    printf("current mode: %s\n",(char* []){"PIO","DMA"}[enable_dma]);
+    printf("input cmd: ");
+    uint8_t* tmp_buffer = physical_alloc(0x400,0x10000);
+    char a = get_c();
+    switch(a){
+        case '1':
+        {
+            printf("\nread from Device [1] ATA [2] ATAPI ?");
+            char x = get_c();
+            memset(tmp_buffer,'\xcc',0x400);
+            if(x == '1'){
+                ide_read_sectors(ata_device,nsecs,lba,tmp_buffer);
+            }else{
+                ide_read_sectors(atapi_device,nsecs,lba,tmp_buffer);
+            }
+            dumpmem(tmp_buffer,0x50);
+        }
+            break;
+        case '2':
+        {
+            printf("\nRead a char: ");
+            char x = get_c();
+            memset(tmp_buffer,x,0x400);
+            printf("\nDevice [1] ATA [2] ATAPI ?");
+            char o = get_c();
+            if(o == '1'){
+                ide_write_sectors(ata_device,nsecs,lba,tmp_buffer);
+                printf("\nwrite char '%c' to ATA\n",x);
+            }else{
+                ide_write_sectors(atapi_device,nsecs,lba,tmp_buffer);
+                printf("\nwrite char '%c' to ATAPI\n",x);
+            }
+        }
+            break;
+        case '3':
+            if(enable_dma){
+                enable_dma = 0;
+                ide_disable_dma(ata_device);
+                ide_disable_dma(atapi_device);
+            }else{
+                enable_dma = 1;
+                ide_enable_dma(ata_device);
+                ide_enable_dma(atapi_device);
+            }
+            break;
+        default:
+            break;
+    }
+
+    }
+}
 
 
 

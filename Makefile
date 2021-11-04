@@ -28,19 +28,19 @@ $(img): $(kernel)
 	rm -rf iso
 
 gdb:$(img)
-	sudo $(QEMU) -S -s -curses $(img) -hdb disk.img \
+	sudo $(QEMU) -S -s -curses -cdrom $(img) -hda disk.img \
 		-netdev tap,id=n1,ifname=tap100 \
 		-device virtio-net-pci,netdev=n1,mac=cc:dd:ee:ff:aa:bb\
-		-smp 2
+		-smp 2 -m 2048M -monitor telnet:0.0.0.0:4444,server,nowait
 
 	#sudo $(QEMU) -enable-kvm -S -s $(img)
 
 
 qemu: 
-	sudo $(QEMU) $(img) -hdb disk.img \
+	sudo $(QEMU) -s -hda disk.img -cdrom $(img)\
 		-netdev tap,id=n1,ifname=tap100 \
 		-device virtio-net-pci,netdev=n1,mac=cc:dd:ee:ff:aa:bb,disable-modern="on" \
-		-smp 2 -curses
+		-smp 2 -m 2048M -curses -monitor telnet:0.0.0.0:4444,server,nowait
 
 	#  
 	# -enable-kvm \

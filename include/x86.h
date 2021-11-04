@@ -62,28 +62,34 @@ static inline void
 insl(uint32_t port, void *addr, int cnt) {
     asm volatile (
             "cld;"
+            "mov %0,%%edi;"
+            "mov %1,%%edx;"
+            "mov %2,%%ecx;"
             "repne; insl;"
-            : "=D" (addr), "=c" (cnt)
-            : "d" (port), "0" (addr), "1" (cnt)
-            : "memory", "cc");
+            :: "m" (addr), "m" (port), "m" (cnt)
+            : "edi", "edx","ecx");
 }
 static inline void
 insw(uint32_t port, void *addr, int cnt) {
     asm volatile (
             "cld;"
+            "mov %0,%%edi;"
+            "mov %1,%%edx;"
+            "mov %2,%%ecx;"
             "repne; insw;"
-            : "=D" (addr), "=c" (cnt)
-            : "d" (port), "0" (addr), "1" (cnt)
-            : "memory", "cc");
+            :: "m" (addr), "m" (port), "m" (cnt)
+            : "edi", "edx","ecx");
 }
 static inline void
 outsw(uint32_t port, void *addr, int cnt) {
     asm volatile (
             "cld;"
+            "mov %0,%%esi;"
+            "mov %1,%%edx;"
+            "mov %2,%%ecx;"
             "repne; outsw;"
-            : "=D" (addr), "=c" (cnt)
-            : "d" (port), "0" (addr), "1" (cnt)
-            : "memory", "cc");
+            :: "m" (addr), "m" (port), "m" (cnt)
+            : "esi", "edx","ecx");
 }
 
 static inline void

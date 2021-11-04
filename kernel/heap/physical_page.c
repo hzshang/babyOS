@@ -14,6 +14,10 @@ uint8_t* physical_alloc(uint32_t size,uint32_t align){
     page_ptr = (uint8_t*)(((uint32_t)page_ptr + align - 1)&~(align-1));
     uint8_t* page = page_ptr;
     page_ptr += size;
+    *page = 1;
+    if(*page != 1){
+        debug("!!!!!!!!!!!!!page memory alloc fail!!!!!!!!!!!!\n");
+    }
     memset(page,0,size);
     return page;
 }
@@ -23,6 +27,10 @@ void physical_page_init(uint8_t* page,uint32_t size){
 //    uint32_t pool_size = size >> (12 + 3);
 //    page_pool = create_bitmap(pool_size);
     page_ptr = page;
+    *page = 1;
+    if(*page != 1){
+        debug("!!!!!!!!!!page memory not available\n!!!!!!!!!!!!!!!");
+    }
 }
 
 
